@@ -1,0 +1,63 @@
+[
+  {
+    "Id": "SHIELD_DOMAIN_WS",
+    "Protocol": "wss",
+    "Modules": [
+      {
+        "Id": "CARGO_WS",
+        "Path": "/cargo/ws",
+        "Endpoints": [
+          {
+            "Id": "SHIPMENT_TRACKING",
+            "Path": "/tracking/{shipmentId}",
+            "UUID": "SHIPMENT_TRACKING"
+          },
+          {
+            "Id": "DRIVER_LOCATION",
+            "Path": "/driver/location",
+            "UUID": "DRIVER_LOCATION"
+          },
+          {
+            "Id": "LOAD_STATUS_UPDATES",
+            "Path": "/status/updates",
+            "UUID": "LOAD_STATUS_UPDATES"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "Id": "NOTIFICATION_DOMAIN_WS",
+    "Protocol": "wss",
+    "Modules": [
+      {
+        "Id": "NOTIFY_WS",
+        "Path": "/notifications",
+        "Endpoints": [
+          {
+            "Id": "USER_NOTIFICATIONS",
+            "Path": "/user",
+            "UUID": "NOTIFICATIONS"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "Id": "MOCK_WS_DOMAIN",
+    "Protocol": "wss",
+    "Modules": [
+      {
+        "Id": "MOCK_WS_MODULE",
+        "Path": "",
+        "Endpoints": [
+          {
+            "Id": "MOCK_ENDPOINT",
+            "Path": "/endpoint",
+            "UUID": "MOCK_WS_ENDPOINT"
+          }
+        ]
+      }
+    ]
+  }
+]
