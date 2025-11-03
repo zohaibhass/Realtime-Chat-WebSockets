@@ -1,68 +1,54 @@
-<div class="chat-container">
+<div class="chat-wrapper">
   <div class="chat-header">
-    <div class="chat-user">
-      <img
-        src="https://cdn-icons-png.flaticon.com/512/2202/2202112.png"
-        alt="User Avatar"
-        class="chat-avatar"
-      />
+    <div class="chat-header-info">
+      <img src="assets/images/img.jpeg" alt="Avatar" class="chat-avatar" />
       <div>
-        <h2 class="chat-title">Zohaib 💬</h2>
-        <p class="chat-status">Connected to PieSocket</p>
+        <h2 class="chat-title">Websocket Chat</h2>
+        <p class="chat-status">Connected</p>
       </div>
     </div>
   </div>
 
-  <div class="chat-box" #chatBox>
+
+  <div class="chat-body">
     <div
       *ngFor="let msg of messages"
-      class="chat-message"
-      [ngClass]="{
-        'sent-message': msg.type === 'sent',
-        'received-message': msg.type === 'received'
-      }"
+      class="message-bubble"
+      [ngClass]="{ sent: msg.isSender, received: !msg.isSender }"
     >
-      <div class="message-bubble">
-        <ng-container *ngIf="msg.msgType === 'text'">
-          <span class="message-text">{{ msg.text }}</span>
-        </ng-container>
-        <ng-container *ngIf="msg.msgType === 'document'">
-          <a
-            *ngIf="msg.filePath"
-            [href]="msg.filePath"
-            target="_blank"
-            class="file-link"
-          >
-            📎 {{ msg.text }}
-          </a>
-        </ng-container>
 
-        <span class="timestamp">{{ msg.ts | date: 'shortTime' }}</span>
-      </div>
+      <ng-container *ngIf="msg.msgType === 'image' && msg.filePath">
+        <img [src]="msg.filePath" alt="image" class="chat-image" />
+      </ng-container>
+
+      <ng-container *ngIf="msg.msgType === 'pdf' && msg.filePath">
+        <a [href]="msg.filePath" target="_blank" class="file-link">
+          📄 {{ msg.fileName }}
+        </a>
+      </ng-container>
+
+      <ng-container *ngIf="msg.msgType === 'text'">
+        <p class="chat-text">{{ msg.text }}</p>
+      </ng-container>
+
+      <div class="timestamp">{{ msg.ts | date: 'shortTime' }}</div>
     </div>
   </div>
 
-  <div class="chat-input-area">
+  <div class="chat-footer">
     <input
-      [(ngModel)]="input"
+      [(ngModel)]="newMessage"
+      (keyup.enter)="sendMessage()"
       type="text"
-      placeholder="Type a message..."
-      (keyup.enter)="send()"
       class="chat-input"
+      placeholder="Type a message..."
     />
-    <button (click)="send()" class="chat-send-btn">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        fill="currentColor"
-        class="bi bi-send"
-        viewBox="0 0 16 16"
-      >
-        <path
-          d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"
-        />
-      </svg>
-    </button>
+    <label class="file-upload">
+<svg xmlns="http://www.w3.org/2000/svg" style="color: #0c6b5f;" width="24" height="24" fill="currentColor" class="bi bi-file-earmark-richtext-fill" viewBox="0 0 16 16">
+  <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1M7 6.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m-.861 1.542 1.33.886 1.854-1.855a.25.25 0 0 1 .289-.047l1.888.974V9.5a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V9s1.54-1.274 1.639-1.208M5 11h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1m0 2h3a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1"/>
+</svg>
+      <input type="file" (change)="handleFileInput($event)" hidden />
+    </label>
+    <button (click)="sendMessage()" class="send-btn">Send</button>
   </div>
 </div>

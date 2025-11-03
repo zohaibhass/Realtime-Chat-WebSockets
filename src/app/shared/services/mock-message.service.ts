@@ -5,8 +5,9 @@ export interface MockChatMessage {
   type: 'sent' | 'received';
   text: string;
   ts: string;
-  msgType?: 'text' | 'document';
+  msgType?: 'text' | 'image' | 'pdf';
   filePath?: string | null;
+  fileName?: string | null;
   isSender?: boolean;
 }
 
@@ -21,16 +22,19 @@ export class MockMessageService {
     'wss://s15414.nyc1.piesocket.com/v3/1?api_key=1yrj6Xk1Bjaovzqc2Y6Smz64ToXdB8rEj1BTFnAI&notify_self=1';
 
   connect(): Observable<MockChatMessage> {
-    if (this.ws) return this.message$.asObservable();
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      return this.message$.asObservable();
+    }
 
     this.ws = new WebSocket(this.WS_URL);
     this.ws.onopen = () => console.log('✅ WebSocket connected');
 
     this.ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
+      if (!event.data || event.data === 'ping') return;
 
-        // Ignore system/read messages
+      try {
+        if (typeof event.data !== 'string' || !event.data.trim().startsWith('{')) return;
+        const data = JSON.parse(event.data);
         if (data.type === 'read') return;
 
         const payload = data.payload || data;
@@ -41,22 +45,27 @@ export class MockMessageService {
           ts: payload.timestamp || new Date().toISOString(),
           msgType: payload.type || 'text',
           filePath: payload.filePath || null,
+          fileName: payload.fileName || null,
           isSender: payload.isSender,
         };
 
         this.message$.next(msg);
       } catch (err) {
-        console.error('⚠️ Error parsing WS message:', event.data, err);
+        console.warn('⚠️ Non-JSON message ignored:', event.data.slice(0, 200));
       }
     };
 
-    this.ws.onerror = (err) => console.error('❌ WS Error:', err);
-    this.ws.onclose = () => console.warn('⚠️ WS Closed');
+    this.ws.onerror = (err) => console.error('🚨 WS Error:', err);
+
+    this.ws.onclose = () => {
+      console.warn('⚠️ WS Closed');
+      setTimeout(() => this.connect(), 3000);
+    };
 
     return this.message$.asObservable();
   }
 
-  sendMessage(msg: string) {
+  sendMessage(content: string, msgType: 'text' | 'image' | 'pdf' = 'text', fileName?: string) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       console.error('🚫 WebSocket not connected!');
       return;
@@ -66,9 +75,10 @@ export class MockMessageService {
       envelope: 'message',
       payload: {
         id: new Date().toISOString(),
-        content: msg,
-        type: 'text',
-        filePath: null,
+        content: msgType === 'text' ? content : `📎 ${fileName || 'File sent'}`,
+        type: msgType,
+        filePath: null, // 🧩 keep null so no large base64 data sent
+        fileName: fileName || null,
         isSender: true,
         timestamp: new Date().toISOString(),
       },
@@ -79,7 +89,10 @@ export class MockMessageService {
   }
 
   disconnect() {
-    this.ws?.close();
-    this.ws = undefined;
+    if (this.ws) {
+      this.ws.close();
+      this.ws = undefined;
+      console.log('🔌 WebSocket disconnected');
+    }
   }
 }
