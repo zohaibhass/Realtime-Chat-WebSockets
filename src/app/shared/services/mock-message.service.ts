@@ -5,6 +5,8 @@ export interface MockChatMessage {
   type: 'sent' | 'received';
   text: string;
   ts: string;
+  msgType?: 'text' | 'document';
+  filePath?: string | null;
   isSender?: boolean;
 }
 
@@ -22,29 +24,34 @@ export class MockMessageService {
     if (this.ws) return this.message$.asObservable();
 
     this.ws = new WebSocket(this.WS_URL);
-
     this.ws.onopen = () => console.log('✅ WebSocket connected');
 
     this.ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
 
-        // Extract payload only if it exists
-        const payload = data?.payload || data;
+        // Ignore system/read messages
+        if (data.type === 'read') return;
 
-        this.message$.next({
+        const payload = data.payload || data;
+
+        const msg: MockChatMessage = {
           type: payload.isSender ? 'sent' : 'received',
-          text: payload.content || JSON.stringify(payload),
+          text: payload.content || '',
           ts: payload.timestamp || new Date().toISOString(),
+          msgType: payload.type || 'text',
+          filePath: payload.filePath || null,
           isSender: payload.isSender,
-        });
+        };
+
+        this.message$.next(msg);
       } catch (err) {
-        console.error('⚠️ Error parsing message:', event.data, err);
+        console.error('⚠️ Error parsing WS message:', event.data, err);
       }
     };
 
-    this.ws.onclose = () => console.warn('❌ WebSocket closed');
-    this.ws.onerror = (err) => console.error('⚠️ WebSocket error:', err);
+    this.ws.onerror = (err) => console.error('❌ WS Error:', err);
+    this.ws.onclose = () => console.warn('⚠️ WS Closed');
 
     return this.message$.asObservable();
   }
